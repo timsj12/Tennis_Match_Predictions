@@ -9,12 +9,12 @@ import tempfile
 
 def get_base_dir(**kwargs):
     ti = kwargs['ti']
-    BASE_DIR = ti.xcom_pull(key='BASE_DIR', task_ids='task_producer')
+    BASE_DIR = ti.xcom_pull(key='BASE_DIR', task_ids='set_initial_inputs')
     return BASE_DIR
 
 def get_base_bucket(**kwargs):
     ti = kwargs['ti']
-    BUCKET_DIR = ti.xcom_pull(key='BUCKET_DIR', task_ids='task_producer')
+    BUCKET_DIR = ti.xcom_pull(key='BUCKET_DIR', task_ids='set_initial_inputs')
     return BUCKET_DIR
 
 BASE_DIR = get_base_dir()
