@@ -3,6 +3,7 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.dates import days_ago
 from datetime import datetime
+from pipeline_inputs import set_dataset_inputs
 from batch_ingest import ingest_data
 from transform import transform_data
 from model_metrics import compare_models
@@ -28,9 +29,17 @@ dag = DAG(
     schedule_interval=timedelta(days=1),
 )
 
+inputs_etl = PythonOperator(
+    task_id='set_data',
+    python_callable=set_dataset_inputs,
+    provide_context=True,
+    dag=dag,
+)
+
 ingest_etl = PythonOperator(
     task_id='ingest_dataset',
     python_callable=ingest_data,
+    provide_context=True,
     dag=dag,
 )
 
@@ -65,4 +74,4 @@ visualizations_etl = PythonOperator(
 )
 
 
-ingest_etl >> transform_etl >> compare_etl >> graph_metrics_etl >> final_data_etl >> visualizations_etl
+inputs_etl >> ingest_etl >> transform_etl >> compare_etl >> graph_metrics_etl >> final_data_etl >> visualizations_etl

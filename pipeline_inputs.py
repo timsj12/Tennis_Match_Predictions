@@ -1,4 +1,5 @@
 
+
 """
 Comment out data sets that are not desired to be examined below.
 Maximum of four pipelilines to be created
@@ -26,6 +27,8 @@ def set_dataset_inputs(**kwargs):
 
     # Look at Men's Tennis Data and make predictions on matchup only and no match metrics
     predictions.append('wta_pre')
+
+    print(predictions)
 
     ti = kwargs['ti']
     ti.xcom_push(key='datasets', value=predictions)
