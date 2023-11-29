@@ -21,7 +21,7 @@ def transform_data(**kwargs):
 
             df.drop(columns=['tourney_id', 'tourney_name', 'tourney_level', 'match_num', 'winner_entry', 'winner_seed','winner_ioc',
                              'loser_ioc', 'loser_seed', 'loser_entry', 'score', 'winner_rank', 'l_bpFaced', 'w_bpFaced','loser_rank',
-                             'tourney_date', 'winner_name', 'loser_name'], inplace=True)
+                             'tourney_date', 'winner_name', 'loser_name','w_1stWon', 'l_1stWon',], inplace=True)
 
             df.dropna(
                 subset=['w_ace', 'w_df', 'loser_hand', 'winner_hand', 'winner_rank_points', 'loser_rank_points', 'loser_age', 'winner_age',

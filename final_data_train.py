@@ -25,10 +25,10 @@ def test_train_data(**kwargs):
 
         X_train, X_test, y_train, y_test = xy_train_test(df_transform, y)
 
-        s3.write_file(X_train, f'X_{tour}_{pre_post}_train.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
-        s3.write_file(X_test, f'X_{tour}_{pre_post}_test.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
-        s3.write_file(y_train, f'y_{tour}_{pre_post}_train.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
-        s3.write_file(y_test, f'y_{tour}_{pre_post}_test.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
+        s3.write_file(X_train, f'X_{tour}_{pre_post}_train.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
+        s3.write_file(X_test, f'X_{tour}_{pre_post}_test.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
+        s3.write_file(y_train, f'y_{tour}_{pre_post}_train.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
+        s3.write_file(y_test, f'y_{tour}_{pre_post}_test.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
 
 def xy_train_test(X, y):
 

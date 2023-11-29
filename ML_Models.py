@@ -29,9 +29,6 @@ def getModels():
     gaussian_naive_bayes_model = GaussianNB()
     models.append(Models('Gaussian Naive Bayes', gaussian_naive_bayes_model))
 
-    support_vector_model = SVC(kernel='linear', C=1.0)
-    models.append(Models('Support Vector',support_vector_model))
-
     decision_tree_model = DecisionTreeClassifier()
     models.append(Models('Decision Tree',decision_tree_model))
 

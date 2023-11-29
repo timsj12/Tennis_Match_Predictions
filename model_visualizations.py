@@ -32,7 +32,8 @@ def visualize_predictions(**kwargs):
             image_predictions = fig1.figure_
             image_name = f'{tour}_{pre_post}_{ml_model.name}_Results_Matrix.png'
             plt.title(f'{tour.upper()} {pre_post.upper()}-Match {ml_model.name}')
-            s3.save_plot(image_predictions, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/Models/')
+            s3.save_plot(image_predictions, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/MODELS/')
+            plt.close()
 
             if ml_model.name == "Random Forest":
                 feature_names = X_train.columns
@@ -47,18 +48,19 @@ def visualize_predictions(**kwargs):
                 feature_importances = feature_importances.sort_values(by='Importance', ascending=False)
 
                 # Select the top 20 important features
-                top_10_features = feature_importances.head(20)
-                print(top_10_features)
+                top_20_features = feature_importances.head(20)
+                print(top_20_features)
 
                 # Increase the figure size
                 fig3 = plt.figure(figsize=(12, 8))
 
-                # Create a bar plot of the top 10 important features with a color palette
-                sns.barplot(x='Importance', y='Feature', data=top_10_features, palette='viridis')
+                # Create a bar plot of the top 20 important features with a color palette
+                sns.barplot(x='Importance', y='Feature', data=top_20_features, palette='viridis')
 
                 # Rotate the y-axis labels for better readability
                 plt.yticks(rotation=0)
 
-                plt.title(f'{tour.upper()} {pre_post.upper()}_match_Top 10 Feature Importances')
+                plt.title(f'{tour.upper()} {pre_post.upper()}-Match Top Features')
                 image_name = f'{tour}_{pre_post}_match_RF_Top_Features.png'
-                s3.save_plot(fig3, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/Models/', False)
+                s3.save_plot(fig3, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/MODELS/', False)
+                plt.close()

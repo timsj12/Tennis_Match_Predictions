@@ -15,7 +15,6 @@ def graph_metrics(**kwargs):
 
         value_color_mapping = {
             'Multi-Layer Perceptron': 'tomato',
-            'Support Vector': 'green',
             'Gradient Boost': 'lightskyblue',
             'Logistic Regression': 'rosybrown',
             'Random Forest': 'lightsalmon',
@@ -36,10 +35,10 @@ def graph_metrics(**kwargs):
 
             if df.columns[i] != 'Time':
                 plt.ylim(0, 1)
-            else:
-                plt.ylim(0, 400)
 
             image_name = f'{tour}_{pre_post}_match_{df.columns[i]}.png'
 
             # Add labels and a title
-            s3.save_plot(bars, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/METRICS/', False)
+            s3.save_plot(bars, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/METRICS/VISUALIZATIONS/', False)
+
+            plt.close()
