@@ -5,23 +5,30 @@ import math
 from sklearn.preprocessing import MinMaxScaler
 
 
-def test_train_data():
+def test_train_data(**kwargs):
+    ti = kwargs['ti']
+    datasets = ti.xcom_pull(task_ids='set_data', key='datasets')
 
-    df = s3.load_file('atp_clean_data.pkl', '/Data')
+    for dataset in datasets:
 
-    y =  df['match_winner'].astype(int)
-    X = df.drop(columns=['match_winner'])
+        tour = dataset[:3]
+        pre_post = dataset[4:]
 
-    scaler = MinMaxScaler()
-    df_transform = scaler.fit_transform(X)
-    df_transform = pd.DataFrame(columns=X.columns, data=df_transform)
+        df = s3.load_file(F'{tour}_{pre_post}_match_clean_data.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
 
-    X_train, X_test, y_train, y_test = xy_train_test(df_transform, y)
+        y =  df['match_winner'].astype(int)
+        X = df.drop(columns=['match_winner'])
 
-    s3.write_file(X_train, 'X_train.pkl', '/Data')
-    s3.write_file(X_test, 'X_test.pkl', '/Data')
-    s3.write_file(y_train, 'y_train.pkl', '/Data')
-    s3.write_file(y_test, 'y_test.pkl', '/Data')
+        scaler = MinMaxScaler()
+        df_transform = scaler.fit_transform(X)
+        df_transform = pd.DataFrame(columns=X.columns, data=df_transform)
+
+        X_train, X_test, y_train, y_test = xy_train_test(df_transform, y)
+
+        s3.write_file(X_train, f'X_{tour}_{pre_post}_train.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
+        s3.write_file(X_test, f'X_{tour}_{pre_post}_test.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
+        s3.write_file(y_train, f'y_{tour}_{pre_post}_train.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
+        s3.write_file(y_test, f'y_{tour}_{pre_post}_test.pkl', f'/{tour.upoer()}/{pre_post.upper()}_MATCH')
 
 def xy_train_test(X, y):
 

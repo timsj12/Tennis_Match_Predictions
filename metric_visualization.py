@@ -3,35 +3,43 @@ import seaborn as sns
 import s3
 sns.set()
 
-def graph_metrics():
+def graph_metrics(**kwargs):
+    ti = kwargs['ti']
+    datasets = ti.xcom_pull(task_ids='set_data', key='datasets')
 
-    df = s3.load_file('atp_ml_model_metrics.pkl', '/Metrics')
+    for dataset in datasets:
+        tour = dataset[:3]
+        pre_post = dataset[4:]
 
-    value_color_mapping = {
-        'Multi-Layer Perceptron': 'tomato',
-        'Support Vector': 'green',
-        'Gradient Boost': 'lightskyblue',
-        'Logistic Regression': 'rosybrown',
-        'Random Forest': 'lightsalmon',
-        'Decision Tree': 'cyan',
-        'Gaussian Naive Bayes': 'brown',
-        'Bernoulli Naive Bayes': 'pink',
-    }
+        df = s3.load_file(f'{tour}_{pre_post}_match_ml_model_metrics.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH/METRICS')
 
-    for i in range(1, len(df.columns)):
-        plt.xticks(rotation=45)
-        plt.xticks(rotation=45, ha='right', fontsize=10)
-        # Bar plot with varying colors for each 'Model'
+        value_color_mapping = {
+            'Multi-Layer Perceptron': 'tomato',
+            'Support Vector': 'green',
+            'Gradient Boost': 'lightskyblue',
+            'Logistic Regression': 'rosybrown',
+            'Random Forest': 'lightsalmon',
+            'Decision Tree': 'cyan',
+            'Gaussian Naive Bayes': 'brown',
+            'Bernoulli Naive Bayes': 'pink',
+        }
 
-        bars = plt.bar(df['Model'], df.iloc[:, i], color=df['Model'].map(value_color_mapping).fillna('gray'))
-        plt.xlabel('Model')
-        plt.title(df.columns[i])
-        plt.tight_layout()
+        for i in range(1, len(df.columns)):
+            plt.xticks(rotation=45)
+            plt.xticks(rotation=45, ha='right', fontsize=10)
+            # Bar plot with varying colors for each 'Model'
 
-        if df.columns[i] != 'Time':
-            plt.ylim(0, 1)
+            bars = plt.bar(df['Model'], df.iloc[:, i], color=df['Model'].map(value_color_mapping).fillna('gray'))
+            plt.xlabel('Model')
+            plt.title(f'{tour.upper()} {pre_post.upper()}-Match - {df.columns[i]}')
+            plt.tight_layout()
 
-        image_name = df.columns[i] + '.png'
+            if df.columns[i] != 'Time':
+                plt.ylim(0, 1)
+            else:
+                plt.ylim(0, 400)
 
-        # Add labels and a title
-        s3.save_plot(bars, image_name, '/Metrics/', False)
+            image_name = f'{tour}_{pre_post}_match_{df.columns[i]}.png'
+
+            # Add labels and a title
+            s3.save_plot(bars, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/METRICS/', False)

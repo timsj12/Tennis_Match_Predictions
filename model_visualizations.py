@@ -7,50 +7,58 @@ import s3
 sns.set()
 
 
-def visualize_predictions():
+def visualize_predictions(**kwargs):
 
-    X_train = s3.load_file('X_train.pkl', '/Data')
-    X_test = s3.load_file('X_test.pkl', '/Data')
-    y_train = s3.load_file('y_train.pkl', '/Data')
-    y_test = s3.load_file('y_test.pkl', '/Data')
+    ti = kwargs['ti']
+    datasets = ti.xcom_pull(task_ids='set_data', key='datasets')
 
-    for ml_model in ML_Models.getModels():
+    for dataset in datasets:
 
-        ml_model.model.fit(X_train, y_train)
+        tour = dataset[:3]
+        pre_post = dataset[4:]
 
-        y_model = ml_model.model.predict(X_test)
-        print(ml_model.name)
-        fig1 = ConfusionMatrixDisplay.from_predictions(y_test, y_model)
-        image_predictions = fig1.figure_
-        image_name = ml_model.name + '_Results_Matrix.png'
-        plt.title(ml_model.name)
-        s3.save_plot(image_predictions, image_name, '/Models/')
+        X_train = s3.load_file(f'X_{tour}_{pre_post}_train.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
+        X_test = s3.load_file(f'X_{tour}_{pre_post}_test.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
+        y_train = s3.load_file(f'y_{tour}_{pre_post}_train.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
+        y_test = s3.load_file(f'y_{tour}_{pre_post}_test.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
 
-        if ml_model.name == "Random Forest":
-            feature_names = X_train.columns
+        for ml_model in ML_Models.getModels():
 
-            # Get feature importances
-            importances = ml_model.model.feature_importances_
+            ml_model.model.fit(X_train, y_train)
 
-            # Create a DataFrame to associate feature names with importances
-            feature_importances = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
+            y_model = ml_model.model.predict(X_test)
+            print(ml_model.name)
+            fig1 = ConfusionMatrixDisplay.from_predictions(y_test, y_model)
+            image_predictions = fig1.figure_
+            image_name = f'{tour}_{pre_post}_{ml_model.name}_Results_Matrix.png'
+            plt.title(f'{tour.upper()} {pre_post.upper()}-Match {ml_model.name}')
+            s3.save_plot(image_predictions, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/Models/')
 
-            # Sort the features by importance (descending)
-            feature_importances = feature_importances.sort_values(by='Importance', ascending=False)
+            if ml_model.name == "Random Forest":
+                feature_names = X_train.columns
 
-            # Select the top 20 important features
-            top_10_features = feature_importances.head(20)
-            print(top_10_features)
+                # Get feature importances
+                importances = ml_model.model.feature_importances_
 
-            # Increase the figure size
-            fig3 = plt.figure(figsize=(12, 8))
+                # Create a DataFrame to associate feature names with importances
+                feature_importances = pd.DataFrame({'Feature': feature_names, 'Importance': importances})
 
-            # Create a bar plot of the top 10 important features with a color palette
-            sns.barplot(x='Importance', y='Feature', data=top_10_features, palette='viridis')
+                # Sort the features by importance (descending)
+                feature_importances = feature_importances.sort_values(by='Importance', ascending=False)
 
-            # Rotate the y-axis labels for better readability
-            plt.yticks(rotation=0)
+                # Select the top 20 important features
+                top_10_features = feature_importances.head(20)
+                print(top_10_features)
 
-            plt.title('Top 10 Feature Importances')
-            image_name = 'RF_Top_Features.png'
-            s3.save_plot(fig3, image_name, '/Models/', False)
+                # Increase the figure size
+                fig3 = plt.figure(figsize=(12, 8))
+
+                # Create a bar plot of the top 10 important features with a color palette
+                sns.barplot(x='Importance', y='Feature', data=top_10_features, palette='viridis')
+
+                # Rotate the y-axis labels for better readability
+                plt.yticks(rotation=0)
+
+                plt.title(f'{tour.upper()} {pre_post.upper()}_match_Top 10 Feature Importances')
+                image_name = f'{tour}_{pre_post}_match_RF_Top_Features.png'
+                s3.save_plot(fig3, image_name, f'/{tour.upper()}/{pre_post.upper()}_MATCH/Models/', False)

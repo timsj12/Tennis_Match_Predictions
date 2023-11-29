@@ -8,60 +8,68 @@ import time
 import ML_Models
 
 
-def compare_models():
+def compare_models(**kwargs):
 
-    df = s3.load_file('atp_clean_data.pkl', '/Data')
+    ti = kwargs['ti']
+    datasets = ti.xcom_pull(task_ids='set_data', key='datasets')
 
-    y =  df['match_winner'].astype(int)
-    X = df.drop(columns=['match_winner'])
+    for dataset in datasets:
 
-    scaler = MinMaxScaler()
-    df_transform = scaler.fit_transform(X)
-    df_transform = pd.DataFrame(columns=X.columns, data=df_transform)
+        tour = dataset[:3]
+        pre_post = dataset[4:]
 
-    kf = KFold(n_splits=5, shuffle=True)
+        df = s3.load_file(f'{tour}_{pre_post}_match_clean_data.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
 
-    metrics_df = pd.DataFrame(columns=['Model', 'Accuracy', 'Precision', 'Recall', 'F1', 'Time'])
+        y =  df['match_winner'].astype(int)
+        X = df.drop(columns=['match_winner'])
 
-    for ml_model in ML_Models.getModels():
-        precision = []
-        recall = []
-        f1 = []
-        accuracy = []
+        scaler = MinMaxScaler()
+        df_transform = scaler.fit_transform(X)
+        df_transform = pd.DataFrame(columns=X.columns, data=df_transform)
 
-        start =time.time()
-        for train_index, test_index in kf.split(df_transform):
-            X_train, X_test = df_transform.iloc[train_index], df_transform.iloc[test_index]
-            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+        kf = KFold(n_splits=5, shuffle=True)
 
-            ml_model.model.fit(X_train, y_train)
+        metrics_df = pd.DataFrame(columns=['Model', 'Accuracy', 'Precision', 'Recall', 'F1', 'Time'])
 
-            y_model = ml_model.model.predict(X_test)
+        for ml_model in ML_Models.getModels():
+            precision = []
+            recall = []
+            f1 = []
+            accuracy = []
 
-        # Calculate Average Precision, Recall, F1 and Accuracy
-            precision.append(precision_score(y_test, y_model))
-            recall.append(recall_score(y_test, y_model))
-            f1.append(f1_score(y_test, y_model))
-            accuracy.append(ml_model.model.score(X_test, y_test))
+            start =time.time()
+            for train_index, test_index in kf.split(df_transform):
+                X_train, X_test = df_transform.iloc[train_index], df_transform.iloc[test_index]
+                y_train, y_test = y.iloc[train_index], y.iloc[test_index]
 
-        time_spent = time.time() - start
+                ml_model.model.fit(X_train, y_train)
 
-        ml_model.precision = np.mean(precision)
-        ml_model.recall = np.mean(recall)
-        ml_model.f1 = np.mean(f1)
-        ml_model.accuracy = np.mean(accuracy)
+                y_model = ml_model.model.predict(X_test)
 
-        metrics_df.loc[len(metrics_df)] = [ml_model.name, ml_model.accuracy, ml_model.precision, ml_model.recall,
-                                           ml_model.f1, time_spent]
+            # Calculate Average Precision, Recall, F1 and Accuracy
+                precision.append(precision_score(y_test, y_model))
+                recall.append(recall_score(y_test, y_model))
+                f1.append(f1_score(y_test, y_model))
+                accuracy.append(ml_model.model.score(X_test, y_test))
 
-        print(ml_model.name)
-        print("Accuracy:", ml_model.accuracy)
-        print("Precision: ", ml_model.precision)
-        print("Recall: ", ml_model.recall)
-        print("F1: ", ml_model.f1)
-        print("Time Spent: ", time_spent)
-        print("-----------------------------------------------")
+            time_spent = time.time() - start
 
-    metrics_df.sort_values(by='Accuracy', ascending=False, inplace=True)
+            ml_model.precision = np.mean(precision)
+            ml_model.recall = np.mean(recall)
+            ml_model.f1 = np.mean(f1)
+            ml_model.accuracy = np.mean(accuracy)
 
-    s3.write_file(metrics_df, 'atp_ml_model_metrics.pkl', '/Metrics')
+            metrics_df.loc[len(metrics_df)] = [ml_model.name, ml_model.accuracy, ml_model.precision, ml_model.recall,
+                                               ml_model.f1, time_spent]
+
+            print(ml_model.name)
+            print("Accuracy:", ml_model.accuracy)
+            print("Precision: ", ml_model.precision)
+            print("Recall: ", ml_model.recall)
+            print("F1: ", ml_model.f1)
+            print("Time Spent: ", time_spent)
+            print("-----------------------------------------------")
+
+        metrics_df.sort_values(by='Accuracy', ascending=False, inplace=True)
+
+        s3.write_file(metrics_df, f'{tour}_{pre_post}_match_ml_model_metrics.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH/METRICS')

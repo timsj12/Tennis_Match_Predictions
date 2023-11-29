@@ -27,6 +27,7 @@ dag = DAG(
     default_args=default_args,
     description='ingest tennis data',
     schedule_interval=timedelta(days=1),
+    concurrency=4,
 )
 
 inputs_etl = PythonOperator(
@@ -37,7 +38,7 @@ inputs_etl = PythonOperator(
 )
 
 ingest_etl = PythonOperator(
-    task_id='ingest_dataset',
+    task_id='ingest_data',
     python_callable=ingest_data,
     provide_context=True,
     dag=dag,
@@ -46,32 +47,38 @@ ingest_etl = PythonOperator(
 transform_etl = PythonOperator(
     task_id='transform_dataset',
     python_callable=transform_data,
+    provide_context=True,
     dag=dag,
 )
 
 compare_etl = PythonOperator(
     task_id='machine_learning_metrics',
     python_callable=compare_models,
+    provide_context=True,
     dag=dag,
 )
 
 graph_metrics_etl = PythonOperator(
     task_id='machine_learning_metrics_graphs',
     python_callable=graph_metrics,
+    provide_context=True,
     dag=dag,
 )
 
 final_data_etl = PythonOperator(
     task_id='create_final_test_train_dataset',
     python_callable=test_train_data,
+    provide_context=True,
     dag=dag,
 )
 
 visualizations_etl = PythonOperator(
     task_id='create_model_plots',
     python_callable=visualize_predictions,
+    provide_context=True,
     dag=dag,
 )
+
 
 
 inputs_etl >> ingest_etl >> transform_etl >> compare_etl >> graph_metrics_etl >> final_data_etl >> visualizations_etl

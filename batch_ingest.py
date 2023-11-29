@@ -4,24 +4,30 @@ import s3
 
 
 def ingest_data(**kwargs):
+
     ti = kwargs['ti']
     datasets = ti.xcom_pull(task_ids='set_data', key='datasets')
 
-    # Check if the pulled value is not None before using it
-    if datasets is not None:
-        logging.info(f"Pulled datasets from XCom: {datasets}")
-        # Rest of your logic using the pulled value
-    else:
-        logging.warning("No datasets found in XCom.")
+    print(datasets)
 
-    df = pd.DataFrame()
+    unique_prefix = set()
 
-    for i in range(2023, 1989, -1):
+    for dataset in datasets:
+        subset = dataset[:3]
+        if subset not in unique_prefix:
+            unique_prefix.add(subset)
 
-        csv_url = f'https://raw.githubusercontent.com/JeffSackmann/tennis_atp/master/atp_matches_{i}.csv'
-        csv = pd.read_csv(csv_url, on_bad_lines='skip')
-        df = pd.concat([df, csv])
+    for tour in unique_prefix:
+        df = pd.DataFrame()
 
-    logging.info(f'DataFrame Created; Shape {df.shape}')
+        print(tour)
 
-    s3.write_file(df,'atp_raw_data.pkl', '/Data')
+        for i in range(2023, 1989, -1):
+
+            csv_url = f'https://raw.githubusercontent.com/JeffSackmann/tennis_{tour}/master/{tour}_matches_{i}.csv'
+            csv = pd.read_csv(csv_url, on_bad_lines='skip')
+            df = pd.concat([df, csv])
+
+        logging.info(f'DataFrame Created; Shape {df.shape}')
+
+        s3.write_file(df,f'{tour}_raw_data.pkl', f'/{tour.upper()}')
