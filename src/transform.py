@@ -105,7 +105,7 @@ def transform_data(**kwargs):
         df.drop(columns=['surface', 'draw_size', 'p0_hand', 'p1_hand', 'round'], inplace=True)
         df = pd.concat([df, ohe_df], axis=1)
 
-        s3.write_file(df,f'{tour}_{pre_post}_match_clean_data.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
+        s3.write_file(df, f'{tour}_{pre_post}_match_clean_data.pkl', f'/{tour.upper()}/{pre_post.upper()}_MATCH')
 
 
 

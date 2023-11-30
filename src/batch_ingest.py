@@ -30,4 +30,4 @@ def ingest_data(**kwargs):
 
         logging.info(f'DataFrame Created; Shape {df.shape}')
 
-        s3.write_file(df,f'{tour}_raw_data.pkl', f'/{tour.upper()}')
+        s3.write_file(df, f'{tour}_raw_data.pkl', f'/{tour.upper()}')
