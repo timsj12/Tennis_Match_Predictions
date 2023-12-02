@@ -8,6 +8,7 @@ from batch_ingest import ingest_data
 from transform import transform_data
 from model_metrics import compare_models
 from metric_visualization import graph_metrics
+from metric_comparison import pre_post_compare
 from final_data_train import test_train_data
 from model_visualizations import visualize_predictions
 
@@ -27,7 +28,6 @@ dag = DAG(
     default_args=default_args,
     description='ingest tennis data',
     schedule_interval=timedelta(days=1),
-    concurrency=4,
 )
 
 inputs_etl = PythonOperator(
@@ -65,6 +65,13 @@ graph_metrics_etl = PythonOperator(
     dag=dag,
 )
 
+pre_post_graph_etl = PythonOperator(
+    task_id='pre_post_graphs',
+    python_callable=pre_post_compare,
+    provide_context=True,
+    dag=dag,
+)
+
 final_data_etl = PythonOperator(
     task_id='create_final_test_train_dataset',
     python_callable=test_train_data,
@@ -81,4 +88,4 @@ visualizations_etl = PythonOperator(
 
 
 
-inputs_etl >> ingest_etl >> transform_etl >> compare_etl >> graph_metrics_etl >> final_data_etl >> visualizations_etl
+inputs_etl >> ingest_etl >> transform_etl >> compare_etl >> graph_metrics_etl >> pre_post_graph_etl >> final_data_etl >> visualizations_etl

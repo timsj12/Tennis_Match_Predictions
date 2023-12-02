@@ -24,7 +24,6 @@ def graph_metrics(**kwargs):
         }
 
         for i in range(1, len(df.columns)):
-            plt.xticks(rotation=45)
             plt.xticks(rotation=45, ha='right', fontsize=10)
             # Bar plot with varying colors for each 'Model'
 
@@ -35,6 +34,9 @@ def graph_metrics(**kwargs):
 
             if df.columns[i] != 'Time':
                 plt.ylim(0, 1)
+                plt.ylabel('Score')
+            else:
+                plt.ylabel('Seconds (s)')
 
             image_name = f'{tour}_{pre_post}_match_{df.columns[i]}.png'
 
