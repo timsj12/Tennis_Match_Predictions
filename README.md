@@ -12,7 +12,7 @@ Machine Learning Models require training and test data to be input in a form wit
 
 **Dropping Columns**
 
-The distinction between post-match and pre-match data was executed by removing specific columns from the dataset for each prediction case.  The data schema was manually reviewed and it was determined which values were irrelevant to both pre and post-match predictions.  Match data including aces, double faults, service points, service games etc were removed from the pre-match prediction data.  Also, columns where the winner could easily be determined from the match were dropped from post match data as well as pre match data.  These include break point faced and 1st serve points won.  The player that loses always faces more break points and the player that wins more 1st serve points always wins.  The model would not be representative in their predictions and would be too biased.
+The distinction between post-match and pre-match data was executed by removing specific columns from the dataset for each prediction case.  The data schema was manually reviewed, and it was determined which values were irrelevant to both pre and post-match predictions.  Match data including aces, double faults, service points, service games etc were removed from the pre-match prediction data.  Also, columns where the winner could easily be determined from the match were dropped from post match data as well as pre match data.  These include break point faced and 1st serve points won.  The player that loses always faces more break points and the player that wins more 1st serve points always wins.  The model would not be representative in their predictions and would be too biased.
 
 >**Irrelevant columns dropped from both pre and post match data:**
 >
@@ -85,6 +85,7 @@ One-Hot Encoding was performed on all columns that have non-numeric values to en
 >'surface', 'draw_size', 'p0_hand', 'p1_hand', 'round'
 
 **Data Transformation Summary**
+
 The below values summarize the transformations taken on the raw data ingested.  The WTA data can be seen to have a lot more null values in the post match data set and the models will may not be as accurate accordingly.
 WTA raw data started at over 93,000 instances and was reduced to just under 21,000 instances.  Further investigation and data cleaning is required to handle the null values in the dataset.
 
@@ -191,7 +192,7 @@ as when all the airflow tasks are completed.
 The [dag.py](src/dag.py) file contains 8 tasks which combined create the data pipeline.  All tasks are dependent on the previous one and run in order once the previous task has been completed.  The list of tasks in order are:
 
 <ol>
-  <li>pipeline_inputs_etl - Set which tour and dataset you want to be examined</li>
+  <li>pipeline_inputs_etl - Set which tour and dataset you want to be examined.  Push Value to Airflow Xcoms</li>
   <li>batch_ingest_etl - Ingest the raw tennis data</li>
   <li>tranform_etl - Clean and Transform the data into an acceptable Machine Learning Model</li>
   <li>compare_etl - Perform K-Fold Cross Validation on all Models for each data set and record performance metrics</li>
@@ -230,4 +231,29 @@ Comment out the lines of the datasets that are not desired to build models on.
 
 ## Future Considerations
 
+#### Project Improvements
+
+The current data set does not provide a good way of predicting future tennis matches.  Post match data is not available before the match takes place and the pre match dataset only takes into account player ranking and player biometrics.
+It provides a good representation of what metrics are needed to win a match but not on WHO will win the match.  That was the goal of this project.  To increase the accuracy of the models, especially the pre-match models there are several
+improvements that could be implemented to help accomplish this.
+  -  Data aggregration and Player performance metrics documented over time.  For example: Career averages and Yearly averages for metrics such as serve percentage in each match, double fault percentage each match.  This would allow for players
+    to have prematch performance data to help predict the winners.  Implementing this would be difficult and require a database to maintain and calculate the time series data for each player.
+  - Adjusting Machine Learning Model Metrics to try and fine tune the models to make them more accurate.  Sci-kit learn default implementations were used with minimal adjustments.
+  - Inputting tournament match draws and comparing them to actual results post tournament.  Predicting match and tournament winners.
+  - Further pre-processing investigation into why so many instances were dropped from the WTA Post Match Data set.
+
+
+#### Data Pipeline Improvements
+
+The data pipeline is a single pipeline with only 1 branch.  But there are four datasets and each task is performed four times over each of the separate data sets.  I tried implementing branching so that all the pipelines could run concurrently
+based on the [pipeline_inputs.py](src/pipeline_inputs.py) but was not able to get this to work.  I could not figure out how to create the branches dynamically from the inputs and run them in parallel.  This would greatly improve the time it takes
+for the pipeline to run.  My solution was to use the Airflow built in task data transfer feature, Xcom.   This worked, but it is not efficient as each task runs four times one after the other.  
+
+Other improvements that could be made include:
+  - Incorporating more AWS tools into the pipeline.  RDS, SQS etc.
+  - Use pySPark instead of pandas if the data set gets large enough
+  - Incorporate Tableau or other Data Visualizations Dashboards
+
+Overall though I am pleased the innovativeness of my project and difficulty I encountered.  From having to pre-process the data and remove the winner and loser feature, using sci-kit learn ML models, matplotlib for plotting and using XCom
+for inter task data transfer.  I thoroughly enjoyed the project and building on my Data Engineering Skills.
 
