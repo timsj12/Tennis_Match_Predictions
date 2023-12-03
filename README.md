@@ -8,7 +8,7 @@ The goal of the project is to examine different Machine Learning Models and thei
 Historical Match data will be ingested from [Jeff Sackmann's](https://github.com/JeffSackmann) github repository.  The schema for both [ATP](https://github.com/JeffSackmann/tennis_atp) and [WTA](https://github.com/JeffSackmann/tennis_wta) data is the same, providing for singular pre-processing steps for both Men and Women's matches.  The time frame selected was from the year 1989 to present time.  The table schema and explanation of data represented in each column can be seen [here](https://github.com/JeffSackmann/tennis_atp/blob/master/matches_data_dictionary.txt).
 
 ### Pre-Processing
-Machine Learning Models require training and test data to be input in a form with no null values and all numeric values.  The following pre-processing steps fromatted the dataset in the proper format.
+Machine Learning Models require training and test data to be input in a form with no null values and all numeric values.  The following pre-processing steps formatted the dataset in the proper format using python's Pandas library.
 
 **Dropping Columns**
 
@@ -85,6 +85,8 @@ One-Hot Encoding was performed on all columns that have non-numeric values to en
 >'surface', 'draw_size', 'p0_hand', 'p1_hand', 'round'
 
 **Data Transformation Summary**
+The below values summarize the transformations taken on the raw data ingested.  The WTA data can be seen to have a lot more null values in the post match data set and the models will may not be as accurate accordingly.
+WTA raw data started at over 93,000 instances and was reduced to just under 21,000 instances.  Further investigation and data cleaning is required to handle the null values in the dataset.
 
 Initial raw data shape:
 
@@ -106,15 +108,18 @@ WTA - Instances: 20992, Features: 55
 
 ## Model Building
 The Machine Learning problem is a binary classification problem where the prediction is trying to identify the match winner.  Either Player 0 or Player 1.  There a multiple classification models that can be examined to help find which 
-model is best and find the best.  The following classification models were selected to inspect prediction results and find the most accurate model.
+model is best and find the best.  The following classification models were selected to inspect prediction results and find the most accurate model.  
 <ol>
   <li>Multi-Layer Perceptron (Neural Network)</li>
   <li>Logistice Regression</li>
   <li>Random Forest</li>
   <li>Decision Tree</li>
+  <li>Gradient Boost</li>
   <li>Gaussian Naive Bayes</li>
   <li>Bernoulli Naive Bayes</li>
 </ol>
+
+All models are from the Sci-kit learn python library except for the Gradient Boost which is from the XGBoost library.
 
 ### Model Metrics
 The six machine learning models are ready to be trained with the tennis data.  The data is separated from its features and target (match_winner) variables.  The features data is normalized using sci-kit learn minMaxScaler so all feature values are in the same
@@ -126,7 +131,6 @@ section of this repo under their appropriate tour and directory.
 
 
 **ATP Model [Accuracy Comparison](Outputs/ATP/PRE_POST_COMPARISON/atp_metric_pre_post_comparison_Accuracy.png)**
-
 ![image](Outputs/ATP/PRE_POST_COMPARISON/atp_metric_pre_post_comparison_Accuracy.png)
 
 The results above show that post match data models are better at predicting match results.  This result is obvious and is expected.  The pre-match results have less data to train on and are only taking into 
@@ -137,7 +141,6 @@ Surprisingly, none of the models are able to predict player winner by greater th
 pre match and post match datasets.  Other methods to be used for improvements will be discussed later.
 
 **ATP Model [Time Comparison](Outputs/ATP/PRE_POST_COMPARISON/atp_metric_pre_post_comparison_Time.png)**
-
 ![image](Outputs/ATP/PRE_POST_COMPARISON/atp_metric_pre_post_comparison_Time.png)
 
 Model Completion Time is also an interesting metric to observe.  Multi-Layer Peceptron Model building took significantly more time to train than all the other combined.  Though it was the most accurate model it is a draw back when 
@@ -158,31 +161,73 @@ portion and the rest were utilized for training.  Each model was again fit and t
 The confusion matrix confirms the results of the K-Fold metrics generated and the actual number of predicted and actual values for each model can be seen.  Note the scales of the different models are different for each model confusion matrices.
 
 **ATP Pre-Match [Multi-Layer Perceptron (Neural Network)](Outputs/ATP/PRE_MATCH/MODELS/atp_pre_Multi-Layer%20Perceptron_Results_Matrix.png)**
-
 ![image](Outputs/ATP/PRE_MATCH/MODELS/atp_pre_Multi-Layer%20Perceptron_Results_Matrix.png)
 
 The MLP model was the most accurate model for pre-match data.  About the same number of player 1 and player 0 were correctly predicted as winners.
 
 **ATP Pre-Match [Gaussian Naive Bayes](Outputs/ATP/PRE_MATCH/MODELS/atp_pre_Gaussian%20Naive%20Bayes_Results_Matrix.png)**
-
 ![image](Outputs/ATP/PRE_MATCH/MODELS/atp_pre_Gaussian%20Naive%20Bayes_Results_Matrix.png)
 
 The Gaussian Naive Bayes was not accurate in the pre-match predictions.  It only predicted player 1 winners accurately while player 0 winner predictions were highly innacurate.
 
 **ATP Pre-Match [Most Important Features](Outputs/ATP/PRE_MATCH/MODELS/atp_pre_match_RF_Top_Features.png) (Random Forest Generated)**
-
 ![image](Outputs/ATP/PRE_MATCH/MODELS/atp_pre_match_RF_Top_Features.png)
 
 Player ranking had the most significant impact of predicting which player would win in the ATP Pre-Match Dataset.  This makes sense as the player presumed to be better would have a higher ranking.  Age was the second most important feature followed by
 player id and player height.  Surface and tournament round did not have much of an impact on the models.
 
 **ATP Post-Match [Most Important Features](Outputs/ATP/POST_MATCH/MODELS/atp_post_match_RF_Top_Features.png) (Random Forest Generated)**
-
 ![image](Outputs/ATP/POST_MATCH/MODELS/atp_post_match_RF_Top_Features.png)
 
 The post match dataset had more features.  The Importance of the features was more evenly distributed among the top features possibly indicating why the models were more accurate.  A better relationship between the features and the match winner could be built.
 2nd serve points won, break points saved, aces, number of serve points and 1st serve In were the top features.  All of these features are critical to winning a tennis match and would represent a good estimate of which player would win.  Still it is of note that
 none of the models were able to predict the winner with greater than 82% accuracy.
 
+## Data Pipeline Infrastructure
+
+The airflow instance was hosted on an Amazon EC2 instance.  Data Lake and Data Warehouse storage was handled by Amazon S3.  Visualization .png storage was also handled by Amazon S3.  The [Outputs](Outputs) directory is in the same structure and contains all the same files
+as when all the airflow tasks are completed.
+
+The [dag.py](src/dag.py) file contains 8 tasks which combined create the data pipeline.  All tasks are dependent on the previous one and run in order once the previous task has been completed.  The list of tasks in order are:
+
+<ol>
+  <li>pipeline_inputs_etl - Set which tour and dataset you want to be examined</li>
+  <li>batch_ingest_etl - Ingest the raw tennis data</li>
+  <li>tranform_etl - Clean and Transform the data into an acceptable Machine Learning Model</li>
+  <li>compare_etl - Perform K-Fold Cross Validation on all Models for each data set and record performance metrics</li>
+  <li>graph_metrics_etl - Create Model Metrics Plots in .png format</li>
+  <li>pre_post_graph_etl - Create Plots Comparing Pre Match and Post Match Model Performance Metrics</li>
+  <li>final_data_etl - Create Final Machine Learing Model X train, X test, y train and y test data sets</li>
+  <li>visualizations_etl - Create Confusion Matrices for each Model and data set and save in .png format.  Create Random Forest Most Important Features Plot</li>
+</ol>
+
+The below plot provides a visual representation of the above data pipeline.
+
+**Data Pipeline [Infrastructure](Infrastructure.png)**
+![image](Infrastructure.png)
+
+## Executing the Pipeline
+
+To execute the pipeline, the following steps and adjustments need to be made.
+
+- Ensure Airflow is properly installed on your EC2 instance
+- Within the [pipeline_inputs.py](src/pipeline_inputs.py) file, select which tours (ATP and / or WTA) and match time (pre-match and / or post-match) are desired to be examined.  By default, all four datasets will be examined.
+Comment out the lines of the datasets that are not desired to build models on.
+  - Note: In order for the pipeline to creat pre and post match model comparison plot, both pre and post datasets must be created for the same tour.  Pipeline will still run if only one is selected for a tour
+- Within [s3.py](src/s3.py) update the `BASE_DIR` variable at the top of the file to your desired S3 location.  Update `DIR` variable to desired bucket name in save plot function within the same s3.py file.
+- Add all files within the [src](src) directory to the airflow/dags folder in your EC2 instance
+  - Install all the necessary dependencies by running the following code:
+
+          pip install scikit-learn
+          pip install xgboost
+          pip install matplotlib
+          pip install seaborn
+          pip install boto3
+
+- Start airflow instance with `airflow standalone` and navigate to the airflow web server
+- Select `batch_ingest_dag` from the dag list.  Trigger the dag manually to run it.
+- Inspect S3 buckets and verify expected data is present once dag successfully runs.
+
+## Future Considerations
 
 
