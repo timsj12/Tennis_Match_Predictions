@@ -57,7 +57,7 @@ player 1 columns.  A new match winner column was created and assigned a value of
 Winner column values were copied to player 1 columns.  Loser column values were copied to player 0 and the match winner values entered is set to 1 as player 1 is now the winner for the
 other 50% of data indices.  The tables below show the implementation of this method in a small subset of data.
 
-** Note Schema and data Not Representative of actual data set schema / data.  For demonstration purposes only.
+** Note Schema and Data Not Representative of actual data set schema / data.  For demonstration purposes only.
 
 | Index | Winner         | Winner_Ace | Winner_DF | Loser              | Loser_Ace | Loser_DF |
 |-------|----------------|------------|-----------|--------------------|-----------|----------|
