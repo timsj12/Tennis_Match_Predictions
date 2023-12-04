@@ -1,4 +1,5 @@
 # Historical Tennis Match Predictions - Machine Learning Data Pipeline
+##### by Tim Jarvis
 Demonstrating the ability to automate ETL processes in AWS utilizing EC2, S3 and Airflow.
 
 ## Objective
@@ -245,7 +246,7 @@ Comment out the lines of the file for datasets that are not desired to be examin
           pip install seaborn
           pip install boto3
 
-- Start airflow instance with `airflow standalone` and navigate to the airflow web server
+- Start airflow instance with `airflow standalone` command and navigate to the airflow web server
 - Select `batch_ingest_dag` from the dag list.  Trigger the dag manually to run it.
 - Inspect S3 buckets and verify expected data is present once dag successfully runs.
 
